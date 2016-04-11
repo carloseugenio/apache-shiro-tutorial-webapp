@@ -7,6 +7,9 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.SimpleAccount;
 import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.UsernamePasswordToken;
+
+import java.util.Arrays;
 
 public class Realm extends AuthorizingRealm {
 
@@ -23,9 +26,27 @@ public class Realm extends AuthorizingRealm {
 	}
 
 	@Override
-	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) {
+	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken tk) {
+		UsernamePasswordToken token = (UsernamePasswordToken) tk;
 		System.out.println("Creating authentication info for token: " + token);
-		SimpleAccount sai = new SimpleAccount("USER_CARLOS", "123", "MY_REALM");
-		return sai;
+		System.out.println("Submitted principal: " + token.getPrincipal());
+		char[] pwd = {'1', '2', '3'};
+		char[] credentials = (char[])token.getCredentials();
+
+		try {
+			System.out.println("Submitted credentials: " + Arrays.toString(credentials));
+			System.out.println("PWD: " + Arrays.toString(pwd));
+			System.out.println("Equals?: " + Arrays.equals(pwd, credentials));
+		} catch (RuntimeException ex) {
+			ex.printStackTrace();
+			throw ex;
+		}
+		if ("admin".equals(token.getPrincipal()) && Arrays.equals(pwd, credentials)) {
+			SimpleAccount account = new SimpleAccount(token.getPrincipal(), token.getCredentials(), "MY_REALM");
+			System.out.println("Submitted token info is valid. Returning a valid account...: " + account);
+			return account;
+		}
+		System.out.println("Submitted Token is not valid. Returning null");
+		return null;
 	}
 }
